@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#080d18">
+  <title>AFD Studio | Simulador de autómatas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="#">
+        <span class="brand-mark">A<span>F</span>D</span>
+        <span>
+          <strong>AFD Studio</strong>
+          <small>FINITE AUTOMATA LAB</small>
+        </span>
+      </a>
+
+      <div class="workspace-label">ESPACIO DE TRABAJO</div>
+
+      <nav class="nav">
+        <button class="nav-item active" data-view="builder">
+          <span class="nav-icon">⌘</span> Constructor <kbd>01</kbd>
+        </button>
+        <button class="nav-item" data-view="simulator">
+          <span class="nav-icon">▷</span> Simulador <kbd>02</kbd>
+        </button>
+        <button class="nav-item" data-view="generator">
+          <span class="nav-icon">⌗</span> Generador <kbd>03</kbd>
+        </button>
+        <button class="nav-item" data-view="theory">
+          <span class="nav-icon">◇</span> Fundamentos <kbd>04</kbd>
+        </button>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <div class="status-card">
+          <span class="pulse"></span>
+          <span>
+            <b>Motor local activo</b>
+            <small>Listo para evaluar</small>
+          </span>
+        </div>
+        <div class="sidebar-foot">
+          ESTRUCTURAS DISCRETAS <span>v1.0.0</span>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="breadcrumb">
+          <span>PROYECTOS</span><i>/</i><b>Mi primer AFD</b>
+        </div>
+        <div class="top-actions">
+          <span class="save-state"><span class="save-dot"></span> Cambios locales</span>
+          <button class="btn btn-ghost" id="resetBtn">↺ <span>Reiniciar</span></button>
+          <button class="btn btn-primary" id="exportBtn">↓ <span>Exportar JSON</span></button>
+        </div>
+      </header>
+
+      <section class="page-heading">
+        <div>
+          <div class="eyebrow">
+            <span class="eyebrow-line"></span> LABORATORIO DE AUTÓMATAS FINITOS
+          </div>
+          <h1>Constructor de <span>autómatas.</span></h1>
+          <p>Diseña, visualiza y comprueba tu autómata finito determinista en un solo lugar.</p>
+        </div>
+        <div class="project-chip">
+          <span class="chip-icon">◈</span>
+          <span>
+            <small>PROYECTO ACTUAL</small>
+            <b id="projectName">AFD · Termina en ab</b>
+          </span>
+          <span class="chip-menu">•••</span>
+        </div>
+      </section>
+
+      <div class="content-grid">
+        <section class="panel config-panel">
+          <div class="panel-head">
+            <div>
+              <span class="section-index">01 / CONFIGURACIÓN</span>
+              <h2>Definición del AFD</h2>
+            </div>
+            <span class="tag tag-blue">5-TUPLA</span>
+          </div>
+
+          <div class="field">
+            <label for="statesInput">ESTADOS <span>Q</span></label>
+            <input id="statesInput" value="s0, s1, s2" autocomplete="off">
+            <small>Separa los estados con comas. Ej: q0, q1, q2</small>
+          </div>
+
+          <div class="field">
+            <label for="alphabetInput">ALFABETO <span>Σ</span></label>
+            <input id="alphabetInput" value="a, b" autocomplete="off">
+            <small>Símbolos permitidos para construir palabras.</small>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="initialSelect">ESTADO INICIAL <span>q₀</span></label>
+              <select id="initialSelect"></select>
+            </div>
+            <div class="field">
+              <label for="finalSelect">ESTADOS FINALES <span>F</span></label>
+              <select id="finalSelect" multiple size="3"></select>
+              <small>Ctrl/Cmd para varios</small>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="panel-subhead">
+            <div>
+              <h3>Función de transición</h3>
+              <p>Define a dónde va cada estado según el símbolo.</p>
+            </div>
+            <span class="mini-count" id="transitionCount">6 TRANSICIONES</span>
+          </div>
+
+          <div class="transition-table-wrap">
+            <table class="transition-table">
+              <thead>
+                <tr>
+                  <th>ESTADO</th>
+                  <th colspan="2">SÍMBOLO DE ENTRADA</th>
+                </tr>
+                <tr>
+                  <th></th>
+                  <th id="symbolHeadA">a</th>
+                  <th id="symbolHeadB">b</th>
+                </tr>
+              </thead>
+              <tbody id="transitionBody"></tbody>
+            </table>
+          </div>
+
+          <div class="config-actions">
+            <button class="btn btn-ghost" id="loadExample">↻ Cargar ejemplo A2</button>
+            <button class="btn btn-primary" id="applyBtn">Aplicar cambios <span>→</span></button>
+          </div>
+
+          <div class="error-box hidden" id="configError" role="alert"></div>
+        </section>
+
+        <section class="right-column">
+          <section class="panel graph-panel">
+            <div class="panel-head graph-head">
+              <div>
+                <span class="section-index">02 / REPRESENTACIÓN</span>
+                <h2>Diagrama de estados</h2>
+              </div>
+              <div class="graph-tools">
+                <span class="live-indicator">● EN VIVO</span>
+                <button class="icon-btn" id="fitGraph" title="Centrar diagrama">⌗</button>
+              </div>
+            </div>
+
+            <div class="graph-canvas" id="graphCanvas">
+              <div class="graph-grid"></div>
+              <svg id="automatonSvg" viewBox="0 0 680 310" role="img" aria-label="Diagrama del autómata"></svg>
+              <div class="graph-legend">
+                <span><i class="legend-start"></i> Inicial</span>
+                <span><i class="legend-final"></i> Final</span>
+                <span><i class="legend-normal"></i> Estado</span>
+              </div>
+            </div>
+
+            <div class="graph-caption">
+              <span><i class="caption-dot"></i> Diagrama generado a partir de la función δ</span>
+              <span>SVG VECTORIAL</span>
+            </div>
+          </section>
+
+          <section class="panel tuple-panel">
+            <div class="panel-head compact">
+              <div>
+                <span class="section-index">03 / DEFINICIÓN FORMAL</span>
+                <h2>La 5-tupla</h2>
+              </div>
+              <span class="tag tag-green">VÁLIDA</span>
+            </div>
+            <div class="tuple-display" id="tupleDisplay">M = (Q, Σ, δ, q₀, F)</div>
+            <div class="tuple-details" id="tupleDetails"></div>
+          </section>
+        </section>
+      </div>
+
+      <section class="panel test-panel" id="testSection">
+        <div class="panel-head">
+          <div>
+            <span class="section-index">04 / ZONA DE PRUEBAS</span>
+            <h2>Evalúa una cadena</h2>
+            <p>Introduce una palabra y observa cómo el autómata procesa cada símbolo.</p>
+          </div>
+          <span class="tag tag-purple">SIMULACIÓN PASO A PASO</span>
+        </div>
+
+        <div class="test-controls">
+          <div class="input-with-label">
+            <label for="wordInput">CADENA DE ENTRADA</label>
+            <div class="word-input-wrap">
+              <span class="input-prefix">›</span>
+              <input id="wordInput" value="abab" placeholder="Escribe una cadena..." autocomplete="off">
+              <span class="input-hint">Σ</span>
+            </div>
+          </div>
+          <button class="btn btn-primary run-btn" id="evaluateBtn">▶ Ejecutar simulación</button>
+        </div>
+
+        <div id="resultArea" class="result-area empty-result">
+          <span class="result-symbol">⌁</span>
+          <span>Esperando una cadena para evaluar...</span>
+        </div>
+
+        <div id="traceArea" class="trace-area hidden">
+          <div class="trace-heading">
+            <b>RECORRIDO DEL AUTÓMATA</b>
+            <span id="traceSummary"></span>
+          </div>
+          <div class="trace-steps" id="traceSteps"></div>
+        </div>
+      </section>
+
+      <section class="bottom-grid">
+        <section class="panel generator-panel">
+          <div class="panel-head">
+            <div>
+              <span class="section-index">05 / EXPLORACIÓN</span>
+              <h2>Generador de palabras</h2>
+              <p>Encuentra cadenas aceptadas por este autómata.</p>
+            </div>
+          </div>
+
+          <div class="generator-controls">
+            <div class="field">
+              <label for="wordCount">CANTIDAD</label>
+              <select id="wordCount">
+                <option>5</option>
+                <option>10</option>
+                <option>15</option>
+                <option>20</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="maxLength">LONGITUD MÁXIMA</label>
+              <select id="maxLength">
+                <option>6</option>
+                <option>4</option>
+                <option>8</option>
+                <option>10</option>
+              </select>
+            </div>
+            <button class="btn btn-secondary" id="generateBtn">Generar ↗</button>
+          </div>
+
+          <div class="generated-list" id="generatedList">
+            <div class="empty-list">Pulsa «Generar» para encontrar palabras aceptadas.</div>
+          </div>
+        </section>
+
+        <section class="panel info-panel">
+          <div class="panel-head">
+            <div>
+              <span class="section-index">06 / RESUMEN</span>
+              <h2>Estado del sistema</h2>
+            </div>
+          </div>
+
+          <div class="metric-grid">
+            <div class="metric">
+              <span>ESTADOS</span>
+              <b id="metricStates">3</b>
+              <small>Conjunto Q</small>
+            </div>
+            <div class="metric">
+              <span>SÍMBOLOS</span>
+              <b id="metricSymbols">2</b>
+              <small>Alfabeto Σ</small>
+            </div>
+            <div class="metric">
+              <span>TRANSICIONES</span>
+              <b id="metricTransitions">6</b>
+              <small>Función δ</small>
+            </div>
+            <div class="metric">
+              <span>ESTADOS FINALES</span>
+              <b id="metricFinals">1</b>
+              <small>Conjunto F</small>
+            </div>
+          </div>
+
+          <div class="tip-box">
+            <span>✦</span>
+            <div>
+              <b>¿Sabías que?</b>
+              <p>Un AFD tiene exactamente una transición definida para cada combinación de estado y símbolo del alfabeto.</p>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <footer>
+        AFD STUDIO <span>·</span> Hecho para aprender teoría de autómatas
+        <span class="footer-right">ESTRUCTURAS DISCRETAS · 2026</span>
+      </footer>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+  <script src="js/app.js"></script>
+</body>
+</html>
