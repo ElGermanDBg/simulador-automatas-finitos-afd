@@ -1,16 +1,13 @@
-# Byte-compiled / cache de Python
+# Cache de Python
 __pycache__/
 *.py[cod]
-*$py.class
 
 # Entornos virtuales
 .venv/
 venv/
-env/
 
-# Archivos temporales de Graphviz generados en ejecución
+# Archivos generados por Graphviz al ejecutar el programa
 automata_afd
 automata_afd.gv
 automata_afd.png
 automata_afd.pdf
-test_*

@@ -1,4 +1,4 @@
-# 🔄 Guía para Mantener el Código Actualizado en GitHub (`ElGermanDBg` y `Dario099`)
+﻿# 🔄 Guía para Mantener el Código Actualizado en GitHub (`ElGermanDBg` y `Dario099`)
 
 Esta guía explica paso a paso cómo trabajar en equipo sobre el repositorio **`simulador-automatas-finitos-afd`** para que ambos integrantes tengan siempre la última versión del código sin conflictos.
 
@@ -92,4 +92,5 @@ git pull origin main; git add .; git commit -m "Actualización del simulador AFD
 | **Ver qué archivos han cambiado** | `git status` |
 | **Ver el historial de cambios del equipo** | `git log --oneline -n 10` |
 | **Subir mis cambios a GitHub** | `git add .` $\to$ `git commit -m "mensaje"` $\to$ `git push origin main` |
-| **Ejecutar el simulador** | `python simulador_afd.py` |
+| **Ejecutar el simulador** | `python src/simulador_afd.py` |
+

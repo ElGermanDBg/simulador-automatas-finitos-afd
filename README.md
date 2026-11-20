@@ -12,7 +12,7 @@
 | **Germán** | [@ElGermanDBg](https://github.com/ElGermanDBg) |
 | **Darío** | [@Dario099](https://github.com/Dario099) |
 
-*(Nota: Para consultar cómo mantener el repositorio actualizado entre los integrantes del equipo, revisar el archivo [GUIA_ACTUALIZACIONES_GIT.md](GUIA_ACTUALIZACIONES_GIT.md)).*
+*(Nota: Para consultar cómo mantener el repositorio actualizado entre los integrantes del equipo, revisar el archivo [docs/GUIA_ACTUALIZACIONES_GIT.md](docs/GUIA_ACTUALIZACIONES_GIT.md)).*
 
 ---
 
@@ -40,7 +40,12 @@ pip install graphviz
 
 ### Paso 3: Ejecutar el simulador
 ```bash
-python simulador_afd.py
+python src/simulador_afd.py
+```
+
+### Paso 4 (opcional): Ejecutar las pruebas
+```bash
+python tests/test_automata.py
 ```
 
 ---
@@ -111,9 +116,19 @@ Al elegir la opción 2 en el menú principal, el programa genera palabras en ord
 
 ## 6. Estructura del Repositorio
 
-- `simulador_afd.py`: Código fuente principal con la clase `Automata` y los 3 módulos del proyecto.
-- `GUIA_ACTUALIZACIONES_GIT.md`: Guía paso a paso para que los integrantes del equipo actualicen y sincronicen el código con Git y GitHub.
-- `capturas/`: Capturas de los tres módulos funcionando con el autómata A2.
+```text
+.
+├── README.md                    # Documentación principal
+├── requirements.txt             # Dependencias de Python (graphviz)
+├── src/
+│   └── simulador_afd.py         # Clase Automata y los 3 módulos (consola)
+├── tests/
+│   └── test_automata.py         # Pruebas de A1-A4 y Tablas 1 y 2
+├── frontend/                    # Interfaz web (a cargo de Darío)
+├── capturas/                    # Capturas de los 3 módulos con A2
+└── docs/
+    └── GUIA_ACTUALIZACIONES_GIT.md  # Cómo sincronizar el código con Git
+```
 
 ---
 
