@@ -12,8 +12,21 @@ const defaultAfd = {
   },
 };
 
-let afd = structuredClone(defaultAfd);
+// Estado inicial: el programa arranca vacío. El ejemplo A2 solo se carga
+// cuando el usuario pulsa «Cargar ejemplo A2».
+const emptyAfd = {
+  states: [],
+  alphabet: [],
+  initial: "",
+  finals: [],
+  transitions: {},
+};
+
+let afd = structuredClone(emptyAfd);
 let lastTrace = [];
+
+const hasAutomaton = () => afd.states.length > 0 && afd.alphabet.length > 0;
+const setText = (list) => (list.length ? `{${list.join(", ")}}` : "∅");
 
 const parseList = (value) => [
   ...new Set(value.split(",").map((x) => x.trim()).filter(Boolean)),
@@ -136,17 +149,19 @@ function renderAll() {
   renderGraph();
   renderTuple();
   renderMetrics();
-  $("projectName").textContent = `AFD · ${afd.finals.join(", ") || "Sin estados finales"}`;
+  $("projectName").textContent = !afd.states.length
+    ? "AFD · Sin autómata"
+    : `AFD · ${afd.finals.join(", ") || "Sin estados finales"}`;
 }
 
 function renderTuple() {
-  $("tupleDisplay").textContent = `M = ({${afd.states.join(", ")}}, {${afd.alphabet.join(", ")}}, δ, ${afd.initial}, {${afd.finals.join(", ")}})`;
+  $("tupleDisplay").textContent = `M = (${setText(afd.states)}, ${setText(afd.alphabet)}, δ, ${afd.initial || "—"}, ${setText(afd.finals)})`;
 
   const pills = [
-    `Q = {${afd.states.join(", ")}}`,
-    `Σ = {${afd.alphabet.join(", ")}}`,
-    `q₀ = ${afd.initial}`,
-    `F = {${afd.finals.join(", ")}}`,
+    `Q = ${setText(afd.states)}`,
+    `Σ = ${setText(afd.alphabet)}`,
+    `q₀ = ${afd.initial || "—"}`,
+    `F = ${setText(afd.finals)}`,
   ];
 
   $("tupleDetails").innerHTML = pills
@@ -164,6 +179,11 @@ function renderMetrics() {
 function renderGraph() {
   const svg = $("automatonSvg");
   const n = afd.states.length;
+
+  if (!n) {
+    svg.innerHTML = `<text x="340" y="130" text-anchor="middle" fill="#9db4ce" font-size="13">Define los estados y el alfabeto, o carga el ejemplo A2, para ver la gráfica.</text>`;
+    return;
+  }
   const cx = 340;
   const cy = 125;
   const rx = Math.min(235, 70 + n * 38);
@@ -270,6 +290,13 @@ function evaluate(word) {
 }
 
 function runEvaluation() {
+  if (!hasAutomaton()) {
+    $("resultArea").className = "result-area empty-result";
+    $("resultArea").innerHTML =
+      '<span class="result-symbol">⌁</span><span>Primero define un autómata o carga el ejemplo A2.</span>';
+    $("traceArea").classList.add("hidden");
+    return;
+  }
   const word = $("wordInput").value.trim();
   const result = evaluate(word);
   lastTrace = result.trace;
@@ -308,6 +335,11 @@ function runEvaluation() {
 }
 
 function generateWords() {
+  if (!hasAutomaton()) {
+    $("generatedList").innerHTML =
+      '<div class="empty-list">Primero define un autómata o carga el ejemplo A2.</div>';
+    return;
+  }
   const wanted = Number($("wordCount").value);
   const max = Number($("maxLength").value);
   const found = [];
@@ -332,12 +364,16 @@ function generateWords() {
 function loadExample() {
   afd = structuredClone(defaultAfd);
   loadForm();
+  $("wordInput").value = "abab";
+  runEvaluation();
   showToast("Ejemplo A2 cargado.");
 }
 
 function resetAll() {
-  loadExample();
-  $("wordInput").value = "abab";
+  afd = structuredClone(emptyAfd);
+  loadForm();
+  $("configError").classList.add("hidden");
+  $("wordInput").value = "";
   $("resultArea").className = "result-area empty-result";
   $("resultArea").innerHTML =
     '<span class="result-symbol">⌁</span><span>Esperando una cadena para evaluar...</span>';
@@ -392,3 +428,4 @@ $("fitGraph").addEventListener("click", renderGraph);
 
 loadForm();
 runEvaluation();
+generateWords();
