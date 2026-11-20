@@ -17,6 +17,7 @@ Descripción:
 """
 
 import itertools
+import json
 import os
 import sys
 
@@ -61,6 +62,156 @@ class Automata:
         self.delta = dict(delta)    # Diccionario de transiciones {(origen, simbolo): destino}
         self.q0 = str(q0)           # Estado inicial
         self.F = list(F)            # Lista de estados de aceptación
+
+    @staticmethod
+    def validar_definicion(
+        Q: list[str],
+        Sigma: list[str],
+        delta: dict,
+        q0: str,
+        F: list[str],
+    ) -> tuple[list[str], list[str]]:
+        """
+        Valida formalmente los 5 elementos de un AFD completo y determinista.
+        Retorna una tupla (errores, advertencias).
+        """
+        errores: list[str] = []
+        advertencias: list[str] = []
+
+        if not isinstance(Q, list) or len(Q) == 0:
+            errores.append("Debes definir al menos un estado en Q.")
+            return errores, advertencias
+
+        vistos_q: set[str] = set()
+        rep_q: list[str] = []
+        for q in Q:
+            if not isinstance(q, str) or not q.strip():
+                errores.append("Los nombres de estados en Q no pueden estar vacíos.")
+            elif any(ch.isspace() for ch in q):
+                errores.append(f"El estado '{q}' no debe contener espacios.")
+            if q in vistos_q and q not in rep_q:
+                rep_q.append(q)
+            vistos_q.add(q)
+        if rep_q:
+            errores.append(f"Estados repetidos en Q: {', '.join(rep_q)}.")
+
+        if not isinstance(Sigma, list) or len(Sigma) == 0:
+            errores.append("Debes definir al menos un símbolo en el alfabeto Σ.")
+            return errores, advertencias
+
+        vistos_s: set[str] = set()
+        rep_s: list[str] = []
+        inv_s: list[str] = []
+        for s in Sigma:
+            if not isinstance(s, str) or len(s) != 1:
+                inv_s.append(str(s))
+            if s in vistos_s and s not in rep_s:
+                rep_s.append(str(s))
+            vistos_s.add(s)
+        if inv_s:
+            errores.append(f"Cada símbolo de Σ debe ser de un único carácter. Inválidos: {', '.join(inv_s)}.")
+        if rep_s:
+            errores.append(f"Símbolos repetidos en Σ: {', '.join(rep_s)}.")
+
+        if not q0 or q0 not in vistos_q:
+            errores.append(f"El estado inicial q0 ('{q0}') debe pertenecer a Q.")
+
+        if not isinstance(F, list):
+            errores.append("El conjunto F debe ser una lista de estados.")
+        else:
+            vistos_f: set[str] = set()
+            rep_f: list[str] = []
+            fuera_f: list[str] = []
+            for f in F:
+                if f not in vistos_q:
+                    fuera_f.append(str(f))
+                if f in vistos_f and str(f) not in rep_f:
+                    rep_f.append(str(f))
+                vistos_f.add(f)
+            if fuera_f:
+                errores.append(f"Estados finales fuera de Q: {', '.join(fuera_f)}.")
+            if rep_f:
+                errores.append(f"Estados finales repetidos en F: {', '.join(rep_f)}.")
+            if len(F) == 0 and not errores:
+                advertencias.append(
+                    "No se indicó ningún estado final (F = ∅). El autómata no reconocerá ninguna palabra."
+                )
+
+        if not isinstance(delta, dict):
+            errores.append("La función de transición δ debe ser un diccionario.")
+        elif not errores:
+            for q in Q:
+                for s in Sigma:
+                    if (q, s) not in delta:
+                        errores.append(f"Falta definir la transición δ({q}, '{s}').")
+                    else:
+                        dest = delta[(q, s)]
+                        if dest not in vistos_q:
+                            errores.append(f"El destino '{dest}' en δ({q}, '{s}') no pertenece a Q.")
+
+        return errores, advertencias
+
+    def to_dict(self) -> dict:
+        """Serializa el autómata a un diccionario JSON estándar."""
+        return {
+            "Q": list(self.Q),
+            "Sigma": list(self.Sigma),
+            "delta": {q: {s: self.delta[(q, s)] for s in self.Sigma} for q in self.Q},
+            "q0": self.q0,
+            "F": list(self.F),
+            "tupla_str": self.obtener_5_tupla_str(),
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> tuple["Automata", list[str]]:
+        """
+        Construye y valida una instancia de Automata desde un diccionario.
+        Acepta tanto claves formales (Q, Sigma, delta, q0, F) como claves del
+        frontend (states, alphabet, transitions, initial, finals).
+        """
+        if not isinstance(data, dict):
+            raise ValueError("Los datos del autómata deben enviarse como objeto JSON.")
+
+        Q = data.get("Q") if "Q" in data else data.get("states", [])
+        Sigma = data.get("Sigma") if "Sigma" in data else data.get("alphabet", [])
+        q0 = data.get("q0") if "q0" in data else data.get("initial", "")
+        F = data.get("F") if "F" in data else data.get("finals", [])
+        raw_delta = data.get("delta") if "delta" in data else data.get("transitions", {})
+
+        Q = [str(x).strip() for x in Q] if isinstance(Q, list) else Q
+        Sigma = [str(x).strip() for x in Sigma] if isinstance(Sigma, list) else Sigma
+        q0 = str(q0).strip() if q0 is not None else ""
+        F = [str(x).strip() for x in F] if isinstance(F, list) else F
+
+        delta_norm: dict[tuple[str, str], str] = {}
+        if isinstance(raw_delta, dict):
+            for k, v in raw_delta.items():
+                if isinstance(k, tuple) and len(k) == 2:
+                    delta_norm[(str(k[0]), str(k[1]))] = str(v).strip()
+                elif isinstance(v, dict):
+                    for sym, dest in v.items():
+                        delta_norm[(str(k), str(sym))] = str(dest).strip()
+                elif isinstance(k, str) and "|" in k:
+                    orig, sym = k.split("|", 1)
+                    delta_norm[(orig, sym)] = str(v).strip()
+
+        errores, advertencias = cls.validar_definicion(Q, Sigma, delta_norm, q0, F)
+        if errores:
+            raise ValueError(" ".join(errores))
+
+        return cls(Q=Q, Sigma=Sigma, delta=delta_norm, q0=q0, F=F), advertencias
+
+    def guardar_json(self, ruta: str) -> None:
+        """Guarda la definición formal del autómata en un archivo JSON."""
+        with open(ruta, "w", encoding="utf-8") as f:
+            json.dump(self.to_dict(), f, ensure_ascii=False, indent=2)
+
+    @classmethod
+    def cargar_json(cls, ruta: str) -> tuple["Automata", list[str]]:
+        """Carga y valida un autómata desde un archivo JSON."""
+        with open(ruta, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return cls.from_dict(data)
 
     # -------------------------------------------------------------------------
     # 4. FUNCIÓN CENTRAL DE EVALUACIÓN
@@ -521,6 +672,7 @@ def modulo_2_cinco_palabras(automata: Automata):
     print("\n" + "=" * 65)
     print("        MÓDULO 2: CINCO PALABRAS RECONOCIDAS POR EL AFD")
     print("=" * 65)
+    print(f"Autómata: {automata.obtener_5_tupla_str()}")
     print("Generando y evaluando palabras en orden canónico (longitud 0 a 10)...")
 
     if not automata.F:
@@ -546,7 +698,8 @@ def modulo_2_cinco_palabras(automata: Automata):
             print(f"      Longitud : {item['longitud']}")
             print(f"      Recorrido: {item['recorrido_str']}\n")
         # Mensaje explicativo estricto solicitado
-        print(f"-> Este autómata solo reconoce {total_encontradas} palabras de longitud menor o igual que 10.")
+        palabra_lbl = "palabra" if total_encontradas == 1 else "palabras"
+        print(f"-> Este autómata solo reconoce {total_encontradas} {palabra_lbl} de longitud menor o igual que 10.")
 
 
 # =============================================================================
@@ -631,6 +784,12 @@ def main():
     Controla el ciclo del menú con las 4 opciones requeridas y valida que
     las opciones 2 y 3 no se ejecuten sin haber construido previamente un autómata.
     """
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stdin.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
     automata_en_memoria = None
 
     while True:

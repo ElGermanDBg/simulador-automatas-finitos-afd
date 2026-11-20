@@ -1,23 +1,20 @@
-# AFD Studio – Interfaz web
+# Interfaz Web – Simulador de Autómatas Finitos
 
-Interfaz web inicial para el repositorio `simulador-automatas-finitos-afd`.
+Interfaz web sencilla de 3 pestañas (Módulos 1, 2 y 3) conectada al motor oficial en Python (`src/simulador_afd.py`) mediante `src/servidor_web.py`.
 
-## Ejecutar
-1. Descomprime el proyecto.
-2. Abre la carpeta `afd_studio` en Visual Studio Code.
-3. Abre `index.html` con Live Server, o simplemente haz doble clic sobre `index.html`.
+## Cómo ejecutar
+Desde la raíz del repositorio:
 
-No necesita instalar dependencias para probar esta primera versión.
+```bash
+python src/servidor_web.py
+```
 
-## Funcionalidades incluidas
-- Diseño adaptable a escritorio y móvil.
-- Constructor de AFD con estados, alfabeto, estado inicial, estados finales y transiciones.
-- Diagrama SVG generado a partir de la definición.
-- Representación de la 5-tupla.
-- Evaluación de cadenas y recorrido paso a paso.
-- Generador de palabras aceptadas en orden canónico.
-- Exportación de la definición del autómata a JSON.
-- Ejemplo A2 del README (palabras que terminan en `ab`).
+Luego abre `http://127.0.0.1:8000` (se abre automáticamente en el navegador).  
+*(También se puede abrir `frontend/index.html` directamente en modo local sin conexión al servidor Python).*
 
-## Integración con el backend Python
-Esta entrega es una primera interfaz funcional autónoma en el navegador. La evaluación y generación se ejecutan en JavaScript para que puedas probar la experiencia sin cambiar el programa Python original. Para integrarla completamente con el proyecto académico, el siguiente paso es crear una API Flask que invoque la clase `Automata` de `simulador_afd.py` y sustituir las funciones locales `evaluate()` y `generateWords()` por peticiones `fetch()` al backend. Así se conserva una única implementación oficial de la lógica del AFD.
+## Qué incluye
+- **Módulo 1:** arranca vacío, admite cualquier cantidad de estados `Q` y símbolos `|Σ| >= 1`, valida duplicados y longitud de 1 carácter, genera la tabla `|Q| × |Σ|`, permite elegir `q0` y `F` (con advertencia si `F = ∅`) y cargar bajo demanda **A1, A2, A3 o A4**.
+- **Gráfica SVG:** agrupa etiquetas (`"a, b"`), dibuja doble círculo para `F`, flecha de inicio, bucles y arcos separados, permite arrastrar los círculos y anima el recorrido paso a paso con números (`1, 2, 3...`, Figura 3).
+- **Módulo 2:** muestra automáticamente las 5 palabras reconocidas más cortas (longitud ≤ 10) en orden canónico con su recorrido y los mensajes exactos para menos de 5 palabras o ninguna.
+- **Módulo 3:** evalúa cualquier cadena (incluyendo `ε` y reportando símbolos inválidos con su posición), guarda historial y anima el recorrido sobre la gráfica.
+- **Exportar / Importar JSON:** guarda y carga definiciones de autómatas en `.json`.
